@@ -15,7 +15,7 @@
 
 <script>
 import segmentation from '../image/segmentation'
-import sky from '../assets/sky.jpg'
+import person from '../assets/2.jpg'
 import { fabric } from 'fabric'
 export default {
   name: 'Task',
@@ -35,25 +35,16 @@ export default {
     })
     const ctx = this.canvas1.getContext('2d')
     await this.loadImage(ctx)
+    this.resetSuperpixels()
   },
   methods: {
-    drawCanvas(ctx) {
-      const img = new Image()
-      img.src = sky
-      const _this = this
-      img.onload = function() {
-        ctx.drawImage(img, 0, 0, this.canvas1.width, this.canvas1.height)
-        _this.resetSuperpixels()
-      }
-    },
     loadImage(ctx) {
       return new Promise(resolve => {
         const image = new Image()
-        image.src = sky
+        image.src = person
         const _this = this
-        image.onload = function() {
+        image.onload = () => {
           ctx.drawImage(image, 0, 0, _this.canvas1.width, _this.canvas1.height)
-          _this.resetSuperpixels()
           resolve(true)
         }
       })
