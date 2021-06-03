@@ -1,25 +1,40 @@
 <template>
   <div>
     <h1>segmentation</h1>
-    <canvas id="canvas" class="segment-annotator-layer"></canvas>
-    <canvas id="canvas2" class="segment-annotator-layer"></canvas>
-    <canvas id="canvas3" class="segment-annotator-layer"></canvas>
+    <div class="canvas-wrapper">
+      <canvas id="canvas1" class="segment-annotator-layer"></canvas>
+    </div>
+    <div class="canvas-wrapper">
+      <canvas id="canvas2" class="segment-annotator-layer"></canvas>
+    </div>
+    <div class="canvas-wrapper">
+      <canvas id="canvas3" class="segment-annotator-layer"></canvas>
+    </div>
   </div>
 </template>
 
 <script>
 import segmentation from '../image/segmentation'
 import sky from '../assets/sky.jpg'
-// import person from '../assets/2.jpg'
+import { fabric } from 'fabric'
 export default {
   name: 'Task',
-
-  mounted() {
-    const canvas = document.getElementById('canvas')
-    canvas.width = 590
-    canvas.height = 396
-    const ctx = canvas.getContext('2d')
-    this.drawCanvas(ctx)
+  data() {
+    return {
+      canvas1: '',
+      canvas2: '',
+      canvas3: ''
+    }
+  },
+  async mounted() {
+    this.canvas1 = new fabric.Canvas('canvas1', {
+      width: 590,
+      height: 396,
+      top: 0,
+      left: 0
+    })
+    const ctx = this.canvas1.getContext('2d')
+    await this.loadImage(ctx)
   },
   methods: {
     drawCanvas(ctx) {
@@ -27,27 +42,41 @@ export default {
       img.src = sky
       const _this = this
       img.onload = function() {
-        ctx.drawImage(img, 0, 0, 590, 396)
+        ctx.drawImage(img, 0, 0, this.canvas1.width, this.canvas1.height)
         _this.resetSuperpixels()
       }
     },
+    loadImage(ctx) {
+      return new Promise(resolve => {
+        const image = new Image()
+        image.src = sky
+        const _this = this
+        image.onload = function() {
+          ctx.drawImage(image, 0, 0, _this.canvas1.width, _this.canvas1.height)
+          _this.resetSuperpixels()
+          resolve(true)
+        }
+      })
+    },
     resetSuperpixels(options) {
       options = options || { method: 'slic', regionSize: 25 }
-      const canvas = document.getElementById('canvas')
-      const ctx = canvas.getContext('2d')
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
-      // console.log(ctx)
+      const ctx = this.canvas1.getContext('2d')
+      const imageData = ctx.getImageData(0, 0, this.canvas1.width, this.canvas1.height)
       const seg = new segmentation()
       const _segmentation = seg.create(imageData, options)
-      console.log(_segmentation.result.data)
       imageData.data.set(_segmentation.result.data)
-      const canvas2 = document.getElementById('canvas2')
-      canvas2.width = 590
-      canvas2.height = 396
-      const ctx2 = canvas2.getContext('2d')
+      this.canvas2 = new fabric.Canvas('canvas2', {
+        width: this.canvas1.width,
+        height: this.canvas1.height,
+        top: 0,
+        left: 0
+      })
+
+      const ctx2 = this.canvas2.getContext('2d')
       ctx2.putImageData(imageData, 0, 0)
+
       this.updateBoundary()
-      // visualiztion data
+      // // visualiztion data
       const data = this.setAlpha(0, imageData)
       ctx2.putImageData(data, 0, 0)
     },
@@ -59,18 +88,18 @@ export default {
       return new ImageData(data, imageData.width, imageData.height)
     },
     updateBoundary() {
-      const canvas3 = document.getElementById('canvas3')
-      canvas3.width = 590
-      canvas3.height = 396
-      const ctx = canvas3.getContext('2d')
-
-      const canvas2 = document.getElementById('canvas2')
-      const imageData = canvas2.getContext('2d').getImageData(0, 0, canvas2.width, canvas2.height)
+      this.canvas3 = new fabric.Canvas('canvas3', {
+        width: this.canvas1.width,
+        height: this.canvas1.height,
+        top: 0,
+        left: 0
+      })
+      const ctx = this.canvas3.getContext('2d')
+      const imageData = this.canvas2.getContext('2d').getImageData(0, 0, this.canvas2.width, this.canvas2.height)
       ctx.putImageData(imageData, 0, 0)
 
       // computeEdgemap
-
-      const canvas3Image = ctx.getImageData(0, 0, canvas3.width, canvas3.height)
+      const canvas3Image = ctx.getImageData(0, 0, this.canvas3.width, this.canvas3.height)
 
       const boundaryColor = [255, 255, 255]
       const boundaryAlpha = 127
@@ -81,9 +110,8 @@ export default {
         },
         canvas3Image
       )
-      // render
-
-      const ctx3 = canvas3.getContext('2d')
+      // // render
+      const ctx3 = this.canvas3.getContext('2d')
       ctx3.putImageData(canvas3Image, 0, 0)
     },
     computeEdgemap(options, imageData) {
@@ -122,27 +150,8 @@ export default {
   }
 }
 </script>
-
-<!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-h3 {
-  margin: 40px 0 0;
-}
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-li {
-  display: inline-block;
-  margin: 0 10px;
-}
-a {
-  color: #42b983;
-}
-.segment-annotator-layer {
-  left: 0;
-  position: absolute;
-  top: 0;
-  cursor: pointer;
+.canvas-wrapper {
+  position: absolute !important;
 }
 </style>

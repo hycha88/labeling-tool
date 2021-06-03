@@ -35,12 +35,37 @@ class Layer {
     if (typeof options === 'function') options = { onload: options }
     this.canvas.width = source.width
     this.canvas.height = source.height
-    var context = this.canvas.getContext('2d')
+    const context = this.canvas.getContext('2d')
     this._setImageSmoothing(context, options)
     if (source instanceof ImageData) context.putImageData(source, 0, 0)
     else context.drawImage(source, 0, 0, this.canvas.width, this.canvas.height)
     this.imageData = context.getImageData(0, 0, this.canvas.width, this.canvas.height)
     if (typeof options.onload === 'function') options.onload.call(this)
+    return this
+  }
+
+  _setImageSmoothing(context, options) {
+    if (typeof options.imageSmoothingEnabled === 'undefined') options.imageSmoothingEnabled = true
+    context.mozImageSmoothingEnabled = options.imageSmoothingEnabled
+    context.webkitImageSmoothingEnabled = options.imageSmoothingEnabled
+    context.msImageSmoothingEnabled = options.imageSmoothingEnabled
+    context.imageSmoothingEnabled = options.imageSmoothingEnabled
+  }
+
+  copy = function(source) {
+    source.render()
+    this.fromCanvas(source.canvas)
+    return this
+  }
+
+  render = function() {
+    if (this.imageData) this.canvas.getContext('2d').putImageData(this.imageData, 0, 0)
+    return this
+  }
+
+  setAlpha = function(alpha) {
+    var data = this.imageData.data
+    for (var i = 3; i < data.length; i += 4) data[i] = alpha
     return this
   }
 }
