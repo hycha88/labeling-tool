@@ -1,5 +1,5 @@
 import Layer from './layer'
-import segmentation from '../image/segmentation'
+// import segmentation from '../image/segmentation'
 
 class SegmentAnnotator {
   constructor(options) {
@@ -12,6 +12,7 @@ class SegmentAnnotator {
     this.visualizationAlpha = (options && options.visualizationAlpha) || 144
     this.highlightAlpha = (options && options.highlightAlpha) || Math.min(255, this.visualizationAlpha + 128)
     this.createLayers(options)
+    this.initialize(options)
   }
 
   createLayers = function(options) {
@@ -28,8 +29,10 @@ class SegmentAnnotator {
   resetSuperpixels = function(options) {
     options = options || {}
     this.layers.superpixel.copy(this.layers.image)
-    this.segmentation = segmentation.create(this.layers.image.imageData, options)
-    this.updateSuperpixels(options)
+
+    console.log('this', this.layers.image, options)
+    // this.segmentation = segmentation.create(this.layers.image.imageData, options)
+    // this.updateSuperpixels(options)
     return this
   }
 
@@ -47,8 +50,11 @@ class SegmentAnnotator {
   }
   initialize = function(options) {
     options = options || {}
-    this.initializeEvents()
-    this.resetSuperpixels(options.superpixelOptions)
+    this.initializeEvents(options)
+  }
+
+  initializeEvents(options) {
+    console.log('get optiosn', options)
   }
 
   updateSuperpixels = function() {

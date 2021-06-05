@@ -36,7 +36,7 @@ class Layer {
     this.canvas.width = source.width
     this.canvas.height = source.height
     const context = this.canvas.getContext('2d')
-    this._setImageSmoothing(context, options)
+    this.setImageSmoothing(context, options)
     if (source instanceof ImageData) context.putImageData(source, 0, 0)
     else context.drawImage(source, 0, 0, this.canvas.width, this.canvas.height)
     this.imageData = context.getImageData(0, 0, this.canvas.width, this.canvas.height)
@@ -44,7 +44,7 @@ class Layer {
     return this
   }
 
-  _setImageSmoothing(context, options) {
+  setImageSmoothing(context, options) {
     if (typeof options.imageSmoothingEnabled === 'undefined') options.imageSmoothingEnabled = true
     context.mozImageSmoothingEnabled = options.imageSmoothingEnabled
     context.webkitImageSmoothingEnabled = options.imageSmoothingEnabled

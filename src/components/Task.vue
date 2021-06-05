@@ -2,13 +2,13 @@
   <div>
     <h1>segmentation</h1>
     <div class="canvas-wrapper">
-      <canvas id="canvas1" class="segment-annotator-layer"></canvas>
+      <canvas id="image" class="segment-annotator-layer"></canvas>
     </div>
     <div class="canvas-wrapper">
-      <canvas id="canvas2" class="segment-annotator-layer"></canvas>
+      <canvas id="superpixel" class="segment-annotator-layer"></canvas>
     </div>
     <div class="canvas-wrapper">
-      <canvas id="canvas3" class="segment-annotator-layer"></canvas>
+      <canvas id="boundary" class="segment-annotator-layer"></canvas>
     </div>
   </div>
 </template>
@@ -16,30 +16,21 @@
 <script>
 import segmentation from '../image/segmentation'
 import person from '../assets/2.jpg'
-// import { fabric } from 'fabric'
-import Canvas from '../helper/canvas'
+import SegmentAnnotator from '../helper/segment-annotator'
 export default {
   name: 'Task',
   data() {
     return {
       canvas1: '',
       canvas2: '',
-      canvas3: ''
+      canvas3: '',
+      layers: ''
     }
   },
   async mounted() {
-    // this.canvas1 = new fabric.Canvas('canvas1', {
-    //   width: 590,
-    //   height: 396,
-    //   top: 0,
-    //   left: 0
-    // })
-    this.canvas1 = new Canvas('canvas1', {
-      width: 590,
-      height: 396,
-      top: 0,
-      left: 0
-    }).canvas
+    const annotator = new SegmentAnnotator()
+    this.layers = annotator.layers
+    this.canvas1 = this.layers.image.canvas
     const ctx = this.canvas1.getContext('2d')
     await this.loadImage(ctx)
     this.resetSuperpixels()
@@ -50,12 +41,39 @@ export default {
         const image = new Image()
         image.src = person
         const _this = this
+
         image.onload = () => {
+          _this.canvas1.width = image.width
+          _this.canvas1.height = image.height
           ctx.drawImage(image, 0, 0, _this.canvas1.width, _this.canvas1.height)
+          const imageData = ctx.getImageData(0, 0, _this.canvas1.width, _this.canvas1.height)
+          _this.layers.image.setImageData(imageData)
           resolve(true)
         }
       })
     },
+    // loadBackgroundImages() {
+    //   return new Promise(resolve => {
+    //     const image = new Image()
+    //     image.src = person
+    //     const _this = this
+    //     image.onload = () => {
+    //       _this.canvas1.setBackgroundImage(
+    //         image.src,
+    //         () => {
+    //           _this.canvas1.requestRenderAll()
+    //         },
+    //         {
+    //           originX: 'left',
+    //           originY: 'top',
+    //           width: _this.canvas1.width,
+    //           height: _this.canvas1.height
+    //         }
+    //       )
+    //       resolve(true)
+    //     }
+    //   })
+    // },
     resetSuperpixels(options) {
       options = options || { method: 'slic', regionSize: 25 }
       const ctx = this.canvas1.getContext('2d')
@@ -63,17 +81,20 @@ export default {
       const seg = new segmentation()
       const _segmentation = seg.create(imageData, options)
       imageData.data.set(_segmentation.result.data)
+      this.canvas2 = this.layers.superpixel.canvas
 
-      this.canvas2 = new Canvas('canvas2', {
-        width: this.canvas1.width,
-        height: this.canvas1.height,
-        top: 0,
-        left: 0
-      }).canvas
+      this.canvas2.width = this.canvas1.width
+      this.canvas2.height = this.canvas1.height
       const ctx2 = this.canvas2.getContext('2d')
       ctx2.putImageData(imageData, 0, 0)
-      console.log('super pixel data', imageData)
-      // this.canvas1.setSuperpixels(imageData)
+
+      // annotator._createPixelIndex(_segmentation.result.numSegments)
+      // this.canvas2 = new Canvas('canvas2', {
+      //   width: this.canvas1.width,
+      //   height: this.canvas1.height,
+      //   top: 0,
+      //   left: 0
+      // }).canvas
 
       this.updateBoundary()
       // // visualiztion data
@@ -88,25 +109,15 @@ export default {
       return new ImageData(data, imageData.width, imageData.height)
     },
     updateBoundary() {
-      // this.canvas3 = new fabric.Canvas('canvas3', {
-      //   width: this.canvas1.width,
-      //   height: this.canvas1.height,
-      //   top: 0,
-      //   left: 0
-      // })
-      this.canvas3 = new Canvas('canvas3', {
-        width: this.canvas1.width,
-        height: this.canvas1.height,
-        top: 0,
-        left: 0
-      }).canvas
+      this.canvas3 = this.layers.boundary.canvas
+      this.canvas3.width = this.canvas1.width
+      this.canvas3.height = this.canvas1.height
       const ctx = this.canvas3.getContext('2d')
       const imageData = this.canvas2.getContext('2d').getImageData(0, 0, this.canvas2.width, this.canvas2.height)
       ctx.putImageData(imageData, 0, 0)
 
       // computeEdgemap
       const canvas3Image = ctx.getImageData(0, 0, this.canvas3.width, this.canvas3.height)
-
       const boundaryColor = [255, 255, 255]
       const boundaryAlpha = 127
       this.computeEdgemap(
