@@ -24,12 +24,14 @@ export default {
       canvas1: '',
       canvas2: '',
       canvas3: '',
-      layers: ''
+      layers: '',
+      annotator: '',
+      canvas: ''
     }
   },
   async mounted() {
-    const annotator = new SegmentAnnotator()
-    this.layers = annotator.layers
+    this.annotator = new SegmentAnnotator()
+    this.layers = this.annotator.layers
     this.canvas1 = this.layers.image.canvas
     const ctx = this.canvas1.getContext('2d')
     await this.loadImage(ctx)
@@ -39,12 +41,13 @@ export default {
     loadImage(ctx) {
       return new Promise(resolve => {
         const image = new Image()
-        image.src = person
+        image.crossOrigin = 'anonymous'
+        image.src = person + '?crossOrigin'
         const _this = this
 
         image.onload = () => {
-          _this.canvas1.width = image.width
-          _this.canvas1.height = image.height
+          _this.canvas1.width = image.width > window.innerWidth * 0.5 ? 553 : image.width
+          _this.canvas1.height = image.height > window.innerHeight * 0.7 ? 746 : image.height
           ctx.drawImage(image, 0, 0, _this.canvas1.width, _this.canvas1.height)
           const imageData = ctx.getImageData(0, 0, _this.canvas1.width, _this.canvas1.height)
           _this.layers.image.setImageData(imageData)
@@ -88,14 +91,9 @@ export default {
       const ctx2 = this.canvas2.getContext('2d')
       ctx2.putImageData(imageData, 0, 0)
 
-      // annotator._createPixelIndex(_segmentation.result.numSegments)
-      // this.canvas2 = new Canvas('canvas2', {
-      //   width: this.canvas1.width,
-      //   height: this.canvas1.height,
-      //   top: 0,
-      //   left: 0
-      // }).canvas
+      this.layers.superpixel.setImageData(imageData)
 
+      this.annotator.createPixelIndex(_segmentation.result.numSegments)
       this.updateBoundary()
       // // visualiztion data
       const data = this.setAlpha(0, imageData)

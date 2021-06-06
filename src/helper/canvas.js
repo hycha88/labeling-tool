@@ -16,16 +16,16 @@ class Canvas {
     this.superpixelData = pixels
   }
 
-  onMouseDown() {
-    // console.log('on mouse down', event)
+  onMouseDown(event) {
+    console.log('on mouse down', event)
   }
-  onMouseUp() {
-    // console.log('on mouse up', event)
-    this.updateIfActive(event)
+  onMouseUp(event) {
+    console.log('on mouse up', event)
+    // this.updateIfActive(event)
   }
-  onMouseMove() {
-    // console.log('on mouse move', event)
-    this.updateIfActive(event)
+  onMouseMove(event) {
+    console.log('on mouse move', event)
+    // this.updateIfActive(event)
   }
 
   updateIfActive(event) {
