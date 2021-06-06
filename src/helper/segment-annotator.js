@@ -54,7 +54,18 @@ class SegmentAnnotator {
   }
 
   initializeEvents(options) {
-    console.log('get optiosn', options)
+    var canvas = this.layers.boundary.canvas
+    canvas.addEventListener('mousedown', () => {
+      console.log('mouse down')
+    })
+
+    canvas.addEventListener('mousemove', () => {
+      console.log('mouse move')
+    })
+
+    canvas.addEventListener('mouseup', () => {
+      console.log('mouse up')
+    })
   }
 
   updateSuperpixels = function() {

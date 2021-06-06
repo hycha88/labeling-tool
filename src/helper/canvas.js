@@ -1,8 +1,8 @@
 import { fabric } from 'fabric'
 
 class Canvas {
-  constructor(id, options) {
-    this.canvas = new fabric.Canvas(id, options)
+  constructor(id) {
+    this.canvas = new fabric.Canvas(id)
     this.initEvent()
     this.superpixelData = null
   }
