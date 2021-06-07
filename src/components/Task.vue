@@ -35,31 +35,24 @@ export default {
 
     this.layers = this.annotator.layers
     this.canvas1 = this.layers.image.canvas
-    const ctx = this.canvas1.getContext('2d')
-    await this.loadImage(ctx)
+    await this.loadImage()
     this.resetSuperpixels()
   },
   methods: {
-    loadImage(ctx) {
+    loadImage() {
       return new Promise(resolve => {
         const image = new Image()
         image.crossOrigin = 'anonymous'
         image.src = person + '?crossOrigin'
-        const _this = this
+        // const _this = this
 
         image.onload = () => {
-          _this.canvas1.width = image.width > window.innerWidth * 0.5 ? 553 : image.width
-          _this.canvas1.height = image.height > window.innerHeight * 0.7 ? 746 : image.height
-
-          ctx.drawImage(image, 0, 0, _this.canvas1.width, _this.canvas1.height)
-          const imageData = ctx.getImageData(0, 0, _this.canvas1.width, _this.canvas1.height)
-          _this.layers.image.setImageData(imageData)
-
+          this.annotator.layers.image.onImageLoad(image)
           // initail layer
-          this.annotator.initialLayer(_this.canvas1.width, _this.canvas1.height)
+          this.annotator.initialLayer()
           // initial visualization
-          this.annotator.initializeAnnotationLayer(_this.canvas1.width, _this.canvas1.height)
-          this.annotator.initializeVisualizationLayer(_this.canvas1.width, _this.canvas1.height)
+          this.annotator.initializeAnnotationLayer()
+          this.annotator.initializeVisualizationLayer()
 
           resolve(true)
         }
@@ -89,35 +82,23 @@ export default {
     // },
     resetSuperpixels(options) {
       options = options || { method: 'slic', regionSize: 25 }
-      const ctx = this.canvas1.getContext('2d')
-      const imageData = ctx.getImageData(0, 0, this.canvas1.width, this.canvas1.height)
+      this.layers.superpixel.copy(this.layers.image)
       const seg = new segmentation()
-      const _segmentation = seg.create(imageData, options)
-      imageData.data.set(_segmentation.result.data)
-      this.canvas2 = this.layers.superpixel.canvas
+      this.segmentation = seg.create(this.layers.image.imageData, options)
+      this.updateSuperpixels()
+    },
 
-      this.canvas2.width = this.canvas1.width
-      this.canvas2.height = this.canvas1.height
+    updateSuperpixels() {
+      let imageData = this.layers.superpixel.imageData
+      imageData.data.set(this.segmentation.result.data)
+      this.canvas2 = this.layers.superpixel.canvas
       const ctx2 = this.canvas2.getContext('2d')
       ctx2.putImageData(imageData, 0, 0)
-
-      this.layers.superpixel.setImageData(imageData)
-
-      this.annotator.createPixelIndex(_segmentation.result.numSegments)
+      this.annotator.createPixelIndex(this.segmentation.result.numSegments)
       this.updateBoundary()
-
-      // // // visualiztion data
       const data = this.setAlpha(0, imageData)
       ctx2.putImageData(data, 0, 0)
     },
-
-    // updateSuperpixels() {
-    //   const ctx = this.canvas1.getContext('2d')
-    //   const imageData = ctx.getImageData(0, 0, this.canvas1.width, this.canvas1.height)
-    //   imageData.data.set(this.segmentation.result.data)
-
-    //   this.annotator.createPixelIndex(this.segmentation.result.numSegments)
-    // },
     setAlpha(alpha, imageData) {
       var data = imageData.data
       for (var i = 3; i < data.length; i += 4) {

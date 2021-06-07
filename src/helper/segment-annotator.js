@@ -5,7 +5,9 @@ class SegmentAnnotator {
   constructor(options) {
     this.colormap = (options && options.colormap) || [
       [255, 255, 255],
-      [255, 0, 0]
+      [255, 0, 0],
+      [128, 0, 255],
+      [64, 32, 32]
     ]
     this.boundaryColor = (options && options.boundaryColor) || [255, 255, 255]
     this.boundaryAlpha = (options && options.boundaryAlpha) || 127
@@ -41,7 +43,6 @@ class SegmentAnnotator {
   createPixelIndex = function(numSegments) {
     const pixelIndex = new Array(numSegments)
     const data = this.layers.superpixel.imageData.data
-    console.log('get data', data)
     let i
     for (i = 0; i < numSegments; ++i) pixelIndex[i] = []
     for (i = 0; i < data.length; i += 4) {
@@ -68,23 +69,25 @@ class SegmentAnnotator {
     })
 
     canvas.addEventListener('mouseup', event => {
-      this.mousestate.down = false
       this.updateIfActive(event)
     })
     canvas.addEventListener('mouseleave', () => {
       this.updateHighlight(null)
-      // if (typeof this.onmousemove === 'function') {
-      //   this.onmousemove.call(this, null)
-      // }
+    })
+    const _this = this
+    window.addEventListener('mouseup', function() {
+      _this.mousestate.down = false
     })
   }
 
-  initialLayer(width, height) {
+  initialLayer() {
+    this.width = this.layers.image.canvas.width
+    this.height = this.layers.image.canvas.height
     for (let key in this.layers) {
       if (key !== 'image') {
         const canvas = this.layers[key].canvas
-        canvas.width = width
-        canvas.height = height
+        canvas.width = this.width
+        canvas.height = this.height
       }
     }
     this.container = document.querySelector('.segment-annotator-outer-container')
@@ -96,26 +99,26 @@ class SegmentAnnotator {
     this.innerContainer.style.top = 0
     this.container.style.left = 0
     this.container.style.top = 0
-    this.innerContainer.style.width = width + 'px'
-    this.innerContainer.style.height = height + 'px'
-    this.container.style.width = width + 'px'
-    this.container.style.height = height + 'px'
+    this.innerContainer.style.width = this.width + 'px'
+    this.innerContainer.style.height = this.height + 'px'
+    this.container.style.width = this.width + 'px'
+    this.container.style.height = this.height + 'px'
   }
 
-  initializeAnnotationLayer(width, height) {
-    var layer = this.layers.annotation
+  initializeAnnotationLayer() {
+    const layer = this.layers.annotation
+    layer.resize(this.width, this.height)
     this.currentLabel = this.defaultLabel
-    layer.resize(width, height)
+    layer.fill([this.defaultLabel, 0, 0, 0], layer.imageData)
     layer.render()
   }
 
-  initializeVisualizationLayer(width, height) {
-    var layer = this.layers.visualization
-    // var initialColor = this.colormap[this.defaultLabel].concat([this.visualizationAlpha])
-
-    // console.log('layers', layer)
-    // layer.fill(initialColor, layer.imageData)
-    layer.resize(width, height)
+  initializeVisualizationLayer() {
+    const layer = this.layers.visualization
+    layer.resize(this.width, this.height)
+    const initialColor = this.colormap[this.defaultLabel].concat([this.visualizationAlpha])
+    console.log('intial color', initialColor)
+    layer.fill(initialColor, layer.imageData)
     layer.render()
   }
 
@@ -144,6 +147,7 @@ class SegmentAnnotator {
   // Update label.
   updateAnnotation(pixels, labels) {
     var updates
+    labels = 2
     labels = typeof labels === 'object' ? labels : this.fillArray(new Int32Array(pixels.length), labels)
     updates = this.getDifferentialUpdates(pixels, labels)
     if (updates.pixels.length === 0) return this
@@ -152,6 +156,22 @@ class SegmentAnnotator {
     this.layers.visualization.render()
     if (typeof this.onchange === 'function') this.onchange.call(this)
     return this
+  }
+
+  fillPixels = function(pixels, labels) {
+    if (pixels.length !== labels.length) throw 'Invalid fill: ' + pixels.length + ' !== ' + labels.length
+    const annotationData = this.layers.annotation.imageData.data
+    const visualizationData = this.layers.visualization.imageData.data
+
+    for (var i = 0; i < pixels.length; ++i) {
+      const offset = pixels[i]
+      const label = labels[i]
+      const color = this.colormap[label]
+      this.setEncodedLabel(annotationData, offset, label)
+      visualizationData[offset + 0] = color[0]
+      visualizationData[offset + 1] = color[1]
+      visualizationData[offset + 2] = color[2]
+    }
   }
 
   // Get the differential update of labels.
@@ -241,6 +261,12 @@ class SegmentAnnotator {
   }
   getEncodedLabel(array, offset) {
     return array[offset] | (array[offset + 1] << 8) | (array[offset + 2] << 16)
+  }
+  setEncodedLabel(array, offset, label) {
+    array[offset + 0] = label & 255
+    array[offset + 1] = (label >>> 8) & 255
+    array[offset + 2] = (label >>> 16) & 255
+    array[offset + 3] = 255
   }
 }
 export default SegmentAnnotator

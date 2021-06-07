@@ -7,6 +7,15 @@ class Layer {
   setImageData(data) {
     this.imageData = data
   }
+
+  onImageLoad = function(image) {
+    this.canvas.width = image.width
+    this.canvas.height = image.height
+    const context = this.canvas.getContext('2d')
+
+    context.drawImage(image, 0, 0, image.width, image.height, 0, 0, this.canvas.width, this.canvas.height)
+    this.imageData = context.getImageData(0, 0, this.canvas.width, this.canvas.height)
+  }
   copy(source) {
     source.render()
     this.fromCanvas(source.canvas)
@@ -44,8 +53,8 @@ class Layer {
     if (this.imageData) this.canvas.getContext('2d').putImageData(this.imageData, 0, 0)
     return this
   }
-  fill = function(rgba) {
-    var data = this.imageData.data
+  fill = function(rgba, imageData) {
+    var data = imageData.data
     for (var i = 0; i < data.length; i += 4) for (var j = 0; j < rgba.length; ++j) data[i + j] = rgba[j]
     return this
   }
