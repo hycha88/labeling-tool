@@ -21,23 +21,51 @@ class Canvas {
   }
   onMouseUp(event) {
     console.log('on mouse up', event)
-    // this.updateIfActive(event)
+    this.updateIfActive(event)
   }
   onMouseMove(event) {
     console.log('on mouse move', event)
-    // this.updateIfActive(event)
+    this.updateIfActive(event)
   }
 
   updateIfActive(event) {
     console.log('update if active', event)
-    // const result = this.getClickOffset(event.e)
-    // const data = document.getElementById('canvas2')
-    // const superpixelData = data.getContext('2d').getImageData(0, 0, data.width, data.height)
-    console.log('get super pixel data', this.superpixelData)
-    // // const annotationData = annotator.layers.annotation.imageData.data
-    // const superpixelIndex = this.getEncodedLabel(superpixelData, offset)
-    // console.log('get result', result)
-    // console.log('print super', superpixelIndex)
+  }
+
+  updateHighlight(pixels) {
+    const visualizationData = this.layers.visualization.imageData.data
+    const boundaryData = this.layers.boundary.imageData.data
+    const annotationData = this.layers.annotation.imageData.data
+    let i = 0
+    let color = ''
+    let offset = 0
+    if (this.currentPixels !== null) {
+      for (i = 0; i < this.currentPixels.length; ++i) {
+        offset = this.currentPixels[i]
+        color = this.colormap[getEncodedLabel(annotationData, offset)]
+        visualizationData[offset + 0] = color[0]
+        visualizationData[offset + 1] = color[1]
+        visualizationData[offset + 2] = color[2]
+        visualizationData[offset + 3] = this.visualizationAlpha
+      }
+    }
+    this.currentPixels = pixels
+    if (this.currentPixels !== null) {
+      for (i = 0; i < pixels.length; ++i) {
+        offset = pixels[i]
+        if (boundaryData[offset + 3]) {
+          visualizationData[offset + 0] = this.boundaryColor[0]
+          visualizationData[offset + 1] = this.boundaryColor[1]
+          visualizationData[offset + 2] = this.boundaryColor[2]
+          visualizationData[offset + 3] = this.highlightAlpha
+        } else {
+          visualizationData[offset + 3] = this.highlightAlpha
+        }
+      }
+    }
+    this.layers.visualization.render()
+    this.layers.boundary.render()
+    if (typeof this.onhighlight === 'function') this.onhighlight.call(this)
   }
 
   getClickOffset = function(event) {
@@ -49,7 +77,6 @@ class Canvas {
 
   getClickPos = function(event) {
     const container = document.getElementsByClassName('canvas-wrapper')[0]
-    console.log('get containter', container)
     const containerRect = container.getBoundingClientRect()
     const offsetLeft =
       containerRect.left +

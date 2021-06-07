@@ -1,21 +1,21 @@
 <template>
   <div>
     <h1>segmentation</h1>
-    <div class="canvas-wrapper">
-      <canvas id="image" class="segment-annotator-layer"></canvas>
-    </div>
-    <div class="canvas-wrapper">
-      <canvas id="superpixel" class="segment-annotator-layer"></canvas>
-    </div>
-    <div class="canvas-wrapper">
-      <canvas id="boundary" class="segment-annotator-layer"></canvas>
+    <div class="segment-annotator-outer-container">
+      <div class="segment-annotator-inner-container">
+        <canvas id="image" class="segment-annotator-layer"></canvas>
+        <canvas id="superpixel" class="segment-annotator-layer"></canvas>
+        <canvas id="visualization" class="segment-annotator-layer"></canvas>
+        <canvas id="boundary" class="segment-annotator-layer"></canvas>
+        <canvas id="annotation" class="segment-annotator-layer"></canvas>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
 import segmentation from '../image/segmentation'
-import person from '../assets/2.jpg'
+import person from '../assets/2.png'
 import SegmentAnnotator from '../helper/segment-annotator'
 export default {
   name: 'Task',
@@ -26,11 +26,13 @@ export default {
       canvas3: '',
       layers: '',
       annotator: '',
-      canvas: ''
+      canvas: '',
+      segmentation: null
     }
   },
   async mounted() {
     this.annotator = new SegmentAnnotator()
+
     this.layers = this.annotator.layers
     this.canvas1 = this.layers.image.canvas
     const ctx = this.canvas1.getContext('2d')
@@ -48,9 +50,17 @@ export default {
         image.onload = () => {
           _this.canvas1.width = image.width > window.innerWidth * 0.5 ? 553 : image.width
           _this.canvas1.height = image.height > window.innerHeight * 0.7 ? 746 : image.height
+
           ctx.drawImage(image, 0, 0, _this.canvas1.width, _this.canvas1.height)
           const imageData = ctx.getImageData(0, 0, _this.canvas1.width, _this.canvas1.height)
           _this.layers.image.setImageData(imageData)
+
+          // initail layer
+          this.annotator.initialLayer(_this.canvas1.width, _this.canvas1.height)
+          // initial visualization
+          this.annotator.initializeAnnotationLayer(_this.canvas1.width, _this.canvas1.height)
+          this.annotator.initializeVisualizationLayer(_this.canvas1.width, _this.canvas1.height)
+
           resolve(true)
         }
       })
@@ -95,10 +105,19 @@ export default {
 
       this.annotator.createPixelIndex(_segmentation.result.numSegments)
       this.updateBoundary()
-      // // visualiztion data
+
+      // // // visualiztion data
       const data = this.setAlpha(0, imageData)
       ctx2.putImageData(data, 0, 0)
     },
+
+    // updateSuperpixels() {
+    //   const ctx = this.canvas1.getContext('2d')
+    //   const imageData = ctx.getImageData(0, 0, this.canvas1.width, this.canvas1.height)
+    //   imageData.data.set(this.segmentation.result.data)
+
+    //   this.annotator.createPixelIndex(this.segmentation.result.numSegments)
+    // },
     setAlpha(alpha, imageData) {
       var data = imageData.data
       for (var i = 3; i < data.length; i += 4) {
@@ -128,6 +147,7 @@ export default {
       // // render
       const ctx3 = this.canvas3.getContext('2d')
       ctx3.putImageData(canvas3Image, 0, 0)
+      this.layers.boundary.setImageData(canvas3Image)
     },
     computeEdgemap(options, imageData) {
       if (typeof options === 'undefined') options = {}
@@ -166,7 +186,10 @@ export default {
 }
 </script>
 <style scoped>
-.canvas-wrapper {
-  position: absolute !important;
+.segment-annotator-layer {
+  left: 0;
+  position: absolute;
+  top: 0;
+  cursor: pointer;
 }
 </style>

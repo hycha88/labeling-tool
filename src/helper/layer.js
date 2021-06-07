@@ -24,8 +24,29 @@ class Layer {
     this.imageData = context.getImageData(0, 0, this.canvas.width, this.canvas.height)
     return this
   }
+
+  resize(width, height) {
+    let temporaryCanvas = document.createElement('canvas')
+    const tempoaryContext = temporaryCanvas.getContext('2d')
+    temporaryCanvas.width = width
+    temporaryCanvas.height = height
+
+    tempoaryContext.drawImage(this.canvas, 0, 0, width, height)
+    this.canvas.width = width
+    this.canvas.height = height
+
+    const context = this.canvas.getContext('2d')
+    context.drawImage(temporaryCanvas, 0, 0)
+    this.imageData = context.getImageData(0, 0, width, height)
+    return this
+  }
   render() {
     if (this.imageData) this.canvas.getContext('2d').putImageData(this.imageData, 0, 0)
+    return this
+  }
+  fill = function(rgba) {
+    var data = this.imageData.data
+    for (var i = 0; i < data.length; i += 4) for (var j = 0; j < rgba.length; ++j) data[i + j] = rgba[j]
     return this
   }
 }
