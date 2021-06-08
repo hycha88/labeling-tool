@@ -1,31 +1,34 @@
 import { fabric } from 'fabric'
-
 class Canvas {
-  constructor(id) {
-    this.canvas = new fabric.Canvas(id)
-    this.initEvent()
+  constructor(id, options) {
+    this.canvas = new fabric.Canvas(id, options)
+    if (id === 'annotation') {
+      this.initEvent(this.canvas)
+    }
     this.superpixelData = null
+    this.mousestate = { down: false, button: 0 }
   }
-  initEvent() {
-    this.canvas.on('mouse:down', this.onMouseDown.bind(this))
-    this.canvas.on('mouse:up', this.onMouseUp.bind(this))
-    this.canvas.on('mouse:move', this.onMouseMove.bind(this))
+  initEvent(canvas) {
+    console.log('init event', canvas.getElement().id)
+    if (canvas) {
+      canvas.on('mouse:down', this.onMouseDown.bind(this))
+      canvas.on('mouse:up', this.onMouseUp.bind(this))
+      canvas.on('mouse:move', this.onMouseMove.bind(this))
+      canvas.on('mouse:out', this.onMouseOut.bind(this))
+    }
   }
 
-  setSuperpixels(pixels) {
-    this.superpixelData = pixels
-  }
-
-  onMouseDown(event) {
-    console.log('on mouse down', event)
+  onMouseDown() {
+    this.mousestate.down = true
   }
   onMouseUp(event) {
-    console.log('on mouse up', event)
     this.updateIfActive(event)
   }
   onMouseMove(event) {
-    console.log('on mouse move', event)
     this.updateIfActive(event)
+  }
+  onMouseOut(event) {
+    console.log('on mouse out', event)
   }
 
   updateIfActive(event) {
@@ -42,7 +45,7 @@ class Canvas {
     if (this.currentPixels !== null) {
       for (i = 0; i < this.currentPixels.length; ++i) {
         offset = this.currentPixels[i]
-        color = this.colormap[getEncodedLabel(annotationData, offset)]
+        color = this.colormap[this.getEncodedLabel(annotationData, offset)]
         visualizationData[offset + 0] = color[0]
         visualizationData[offset + 1] = color[1]
         visualizationData[offset + 2] = color[2]

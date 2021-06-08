@@ -1,6 +1,7 @@
+import Canvas from './canvas'
 class Layer {
-  constructor(id) {
-    this.canvas = document.getElementById(id)
+  constructor(id, options) {
+    this.canvas = new Canvas(id, options).canvas
     this.imageData = null
   }
 
@@ -8,13 +9,16 @@ class Layer {
     this.imageData = data
   }
 
-  onImageLoad = function(image) {
-    this.canvas.width = image.width
-    this.canvas.height = image.height
-    const context = this.canvas.getContext('2d')
+  onImageLoad(image) {
+    return new Promise(resolve => {
+      this.canvas.width = image.width
+      this.canvas.height = image.height
+      const context = this.canvas.getContext('2d')
 
-    context.drawImage(image, 0, 0, image.width, image.height, 0, 0, this.canvas.width, this.canvas.height)
-    this.imageData = context.getImageData(0, 0, this.canvas.width, this.canvas.height)
+      context.drawImage(image, 0, 0, image.width, image.height, 0, 0, this.canvas.width, this.canvas.height)
+      this.imageData = context.getImageData(0, 0, this.canvas.width, this.canvas.height)
+      resolve(true)
+    })
   }
   copy(source) {
     source.render()
@@ -28,8 +32,9 @@ class Layer {
     this.canvas.width = source.width
     this.canvas.height = source.height
     var context = this.canvas.getContext('2d')
+
     if (source instanceof ImageData) context.putImageData(source, 0, 0)
-    else context.drawImage(source, 0, 0, this.canvas.width, this.canvas.height)
+    else context.drawImage(source.getElement(), 0, 0, this.canvas.width, this.canvas.height)
     this.imageData = context.getImageData(0, 0, this.canvas.width, this.canvas.height)
     return this
   }
@@ -40,7 +45,7 @@ class Layer {
     temporaryCanvas.width = width
     temporaryCanvas.height = height
 
-    tempoaryContext.drawImage(this.canvas, 0, 0, width, height)
+    tempoaryContext.drawImage(this.canvas.getElement(), 0, 0, width, height)
     this.canvas.width = width
     this.canvas.height = height
 

@@ -1,5 +1,4 @@
 import Layer from './layer'
-// import segmentation from '../image/segmentation'
 
 class SegmentAnnotator {
   constructor(options) {
@@ -30,16 +29,6 @@ class SegmentAnnotator {
     }
   }
 
-  // Run superpixel segmentation.
-  resetSuperpixels = function(options) {
-    options = options || {}
-    this.layers.superpixel.copy(this.layers.image)
-    console.log('options', options)
-    // this.segmentation = segmentation.create(this.layers.image.imageData, options)
-    // this.updateSuperpixels(options)
-    return this
-  }
-
   createPixelIndex = function(numSegments) {
     const pixelIndex = new Array(numSegments)
     const data = this.layers.superpixel.imageData.data
@@ -59,25 +48,25 @@ class SegmentAnnotator {
 
   initializeEvents(options) {
     console.log(options)
-    const canvas = this.layers.annotation.canvas
-    canvas.addEventListener('mousedown', () => {
-      this.mousestate.down = true
-    })
+    // const canvas = this.layers.annotation.canvas
+    // canvas.addEventListener('mousedown', () => {
+    //   this.mousestate.down = true
+    // })
 
-    canvas.addEventListener('mousemove', event => {
-      this.updateIfActive(event)
-    })
+    // canvas.addEventListener('mousemove', event => {
+    //   this.updateIfActive(event)
+    // })
 
-    canvas.addEventListener('mouseup', event => {
-      this.updateIfActive(event)
-    })
-    canvas.addEventListener('mouseleave', () => {
-      this.updateHighlight(null)
-    })
-    const _this = this
-    window.addEventListener('mouseup', function() {
-      _this.mousestate.down = false
-    })
+    // canvas.addEventListener('mouseup', event => {
+    //   this.updateIfActive(event)
+    // })
+    // canvas.addEventListener('mouseleave', () => {
+    //   this.updateHighlight(null)
+    // })
+    // const _this = this
+    // window.addEventListener('mouseup', function() {
+    //   _this.mousestate.down = false
+    // })
   }
 
   initialLayer() {
@@ -109,6 +98,7 @@ class SegmentAnnotator {
     const layer = this.layers.annotation
     layer.resize(this.width, this.height)
     this.currentLabel = this.defaultLabel
+
     layer.fill([this.defaultLabel, 0, 0, 0], layer.imageData)
     layer.render()
   }
@@ -117,7 +107,6 @@ class SegmentAnnotator {
     const layer = this.layers.visualization
     layer.resize(this.width, this.height)
     const initialColor = this.colormap[this.defaultLabel].concat([this.visualizationAlpha])
-    console.log('intial color', initialColor)
     layer.fill(initialColor, layer.imageData)
     layer.render()
   }

@@ -1,14 +1,30 @@
 <template>
   <div>
     <h1>segmentation</h1>
-    <div class="segment-annotator-outer-container">
-      <div class="segment-annotator-inner-container">
-        <canvas id="image" class="segment-annotator-layer"></canvas>
-        <canvas id="superpixel" class="segment-annotator-layer"></canvas>
-        <canvas id="visualization" class="segment-annotator-layer"></canvas>
-        <canvas id="boundary" class="segment-annotator-layer"></canvas>
-        <canvas id="annotation" class="segment-annotator-layer"></canvas>
+    <div class="box">
+      <div class="segment-annotator-outer-container">
+        <div class="segment-annotator-inner-container">
+          <div class="canvas-wrapper">
+            <canvas id="image" class="segment-annotator-layer"></canvas>
+          </div>
+          <div class="canvas-wrapper">
+            <canvas id="superpixel" class="segment-annotator-layer"></canvas>
+          </div>
+          <div class="canvas-wrapper">
+            <canvas id="visualization" class="segment-annotator-layer"></canvas>
+          </div>
+          <div class="canvas-wrapper">
+            <canvas id="boundary" class="segment-annotator-layer"></canvas>
+          </div>
+          <div class="canvas-wrapper">
+            <canvas id="annotation" class="segment-annotator-layer"></canvas>
+          </div>
+        </div>
       </div>
+    </div>
+
+    <div class="box">
+      <button @click="upload">upload</button>
     </div>
   </div>
 </template>
@@ -26,60 +42,74 @@ export default {
       canvas3: '',
       layers: '',
       annotator: '',
-      canvas: '',
       segmentation: null
     }
   },
   async mounted() {
-    this.annotator = new SegmentAnnotator()
+    //set canvas size
+    this.annotator = new SegmentAnnotator({
+      width: window.innerWidth,
+      height: window.innerHeight
+    })
 
     this.layers = this.annotator.layers
     this.canvas1 = this.layers.image.canvas
-    await this.loadImage()
-    this.resetSuperpixels()
   },
   methods: {
-    loadImage() {
-      return new Promise(resolve => {
-        const image = new Image()
-        image.crossOrigin = 'anonymous'
-        image.src = person + '?crossOrigin'
-        // const _this = this
-
-        image.onload = () => {
-          this.annotator.layers.image.onImageLoad(image)
-          // initail layer
-          this.annotator.initialLayer()
-          // initial visualization
-          this.annotator.initializeAnnotationLayer()
-          this.annotator.initializeVisualizationLayer()
-
-          resolve(true)
-        }
-      })
-    },
-    // loadBackgroundImages() {
+    // loadImage() {
     //   return new Promise(resolve => {
     //     const image = new Image()
-    //     image.src = person
-    //     const _this = this
-    //     image.onload = () => {
-    //       _this.canvas1.setBackgroundImage(
-    //         image.src,
-    //         () => {
-    //           _this.canvas1.requestRenderAll()
-    //         },
-    //         {
-    //           originX: 'left',
-    //           originY: 'top',
-    //           width: _this.canvas1.width,
-    //           height: _this.canvas1.height
-    //         }
-    //       )
+    //     image.crossOrigin = 'anonymous'
+    //     image.src = person + '?crossOrigin'
+    //     // const _this = this
+
+    //     image.onload = async () => {
+    //       const result = await this.annotator.layers.image.onImageLoad(image)
+    //       if (result) {
+    //         // initail layer
+    //         this.annotator.initialLayer()
+    //         // initial visualization
+    //         this.annotator.initializeAnnotationLayer()
+    //         this.annotator.initializeVisualizationLayer()
+    //       }
     //       resolve(true)
     //     }
     //   })
     // },
+    loadBackgroundImages() {
+      return new Promise(resolve => {
+        const image = new Image()
+        image.src = person
+        const _this = this
+        image.onload = async () => {
+          _this.canvas1.setBackgroundImage(
+            image.src,
+            () => {
+              _this.canvas1.requestRenderAll()
+              const result = this.annotator.layers.image.onImageLoad(image)
+              if (result) {
+                this.annotator.initialLayer()
+                // initial visualization
+                this.annotator.initializeAnnotationLayer()
+                this.annotator.initializeVisualizationLayer()
+                resolve(true)
+              }
+            },
+            {
+              width: _this.canvas1.width,
+              height: _this.canvas1.height
+            }
+          )
+        }
+      })
+    },
+
+    async upload() {
+      const result = await this.loadBackgroundImages()
+      if (result) {
+        this.resetSuperpixels()
+      }
+    },
     resetSuperpixels(options) {
       options = options || { method: 'slic', regionSize: 25 }
       this.layers.superpixel.copy(this.layers.image)
@@ -108,8 +138,6 @@ export default {
     },
     updateBoundary() {
       this.canvas3 = this.layers.boundary.canvas
-      this.canvas3.width = this.canvas1.width
-      this.canvas3.height = this.canvas1.height
       const ctx = this.canvas3.getContext('2d')
       const imageData = this.canvas2.getContext('2d').getImageData(0, 0, this.canvas2.width, this.canvas2.height)
       ctx.putImageData(imageData, 0, 0)
@@ -167,10 +195,16 @@ export default {
 }
 </script>
 <style scoped>
+.canvas-wrapper {
+  position: absolute !important;
+}
 .segment-annotator-layer {
   left: 0;
   position: absolute;
   top: 0;
   cursor: pointer;
+}
+.box {
+  display: inline-block;
 }
 </style>
