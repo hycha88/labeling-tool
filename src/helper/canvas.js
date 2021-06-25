@@ -2,11 +2,23 @@ import { fabric } from 'fabric'
 class Canvas {
   constructor(id, options) {
     this.canvas = new fabric.Canvas(id, options)
-    if (id === 'image') {
-      this.initEvent(this.canvas)
-    }
+    // if (id === 'image') {
+    //   this.initEvent(this.canvas)
+    // }
     this.superpixelData = null
     this.mousestate = { down: false, button: 0 }
+    // constants
+    this.CONSTANT = {
+      RECT_STROKE: '#3dea3d',
+      POLYGON_STROKE: '#1aebff',
+      POINT_STROKE: '#333',
+
+      POINT_STROKE_WIDTH: 0.5,
+
+      RECT_FILL: '#0000',
+      POLYGON_FILL: '#fff2',
+      POINT_FILL: '#f2f2f2'
+    }
   }
   initEvent(canvas) {
     if (canvas) {
@@ -14,7 +26,9 @@ class Canvas {
       canvas.on('mouse:up', this.onMouseUp.bind(this))
       canvas.on('mouse:move', this.onMouseMove.bind(this))
       canvas.on('mouse:out', this.onMouseOut.bind(this))
+      canvas.on('mouse:wheel', this.wheelHandler.bind(this))
     }
+    this.canvas.hoverCursor = 'default'
   }
 
   onMouseDown() {
@@ -32,6 +46,23 @@ class Canvas {
 
   updateIfActive(event) {
     console.log('update if active', event)
+  }
+  wheelHandler(opt) {
+    const e = opt.e
+    // zoom
+    const zoom_max = this.CONSTANT.ZOOM_MAX
+    const zoom_min = this.CONSTANT.ZOOM_MIN
+    const delta = e.deltaY
+    let zoom = this.canvas.getZoom()
+
+    zoom *= 0.999 ** delta
+    if (zoom > zoom_max) zoom = zoom_max
+    if (zoom < zoom_min) zoom = zoom_min
+
+    this.canvas.zoomToPoint({ x: e.offsetX, y: e.offsetY }, zoom)
+
+    e.preventDefault()
+    e.stopPropagation()
   }
 
   updateHighlight(pixels) {

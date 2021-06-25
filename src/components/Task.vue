@@ -105,6 +105,7 @@ export default {
 
       fabric.Image.fromURL(c.toDataURL(), img => {
         img.selectable = false
+        img.hoverCursor = 'pointer'
         this.canvas1.add(img)
       })
     },

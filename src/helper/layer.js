@@ -1,7 +1,7 @@
-import Canvas from './canvas'
+import { fabric } from 'fabric'
 class Layer {
   constructor(id, options) {
-    this.canvas = new Canvas(id, options).canvas
+    this.canvas = new fabric.Canvas(id, options)
     this.imageData = null
   }
 

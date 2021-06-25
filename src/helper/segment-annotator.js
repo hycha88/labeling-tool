@@ -15,6 +15,18 @@ class SegmentAnnotator {
 
     this.mousestate = { down: false, button: 0 }
     this.defaultLabel = (options && options.defaultLabel) || 0
+
+    this.CONSTANT = {
+      RECT_STROKE: '#3dea3d',
+      POLYGON_STROKE: '#1aebff',
+      POINT_STROKE: '#333',
+
+      POINT_STROKE_WIDTH: 0.5,
+
+      RECT_FILL: '#0000',
+      POLYGON_FILL: '#fff2',
+      POINT_FILL: '#f2f2f2'
+    }
     this.createLayers(options)
     this.initialize(options)
   }
@@ -48,7 +60,14 @@ class SegmentAnnotator {
 
   initializeEvents(options) {
     console.log(options)
-    // const canvas = this.layers.annotation.canvas
+
+    const canvas = this.layers.image.canvas
+    this.canvas = canvas
+    canvas.on('mouse:down', this.onMouseDown.bind(this))
+    canvas.on('mouse:up', this.onMouseUp.bind(this))
+    canvas.on('mouse:move', this.onMouseMove.bind(this))
+    canvas.on('mouse:out', this.onMouseOut.bind(this))
+    canvas.on('mouse:wheel', this.wheelHandler.bind(this))
     // canvas.addEventListener('mousedown', () => {
     //   this.mousestate.down = true
     // })
@@ -67,6 +86,40 @@ class SegmentAnnotator {
     // window.addEventListener('mouseup', function() {
     //   _this.mousestate.down = false
     // })
+  }
+
+  onMouseDown() {
+    this.mousestate.down = true
+  }
+  onMouseUp(event) {
+    this.updateIfActive(event)
+  }
+  onMouseMove(event) {
+    this.updateIfActive(event)
+  }
+  onMouseOut(event) {
+    console.log('on mouse out', event)
+  }
+
+  updateIfActive(event) {
+    console.log('update if active', event)
+  }
+  wheelHandler(opt) {
+    const e = opt.e
+    // zoom
+    const zoom_max = this.CONSTANT.ZOOM_MAX
+    const zoom_min = this.CONSTANT.ZOOM_MIN
+    const delta = e.deltaY
+    let zoom = this.canvas.getZoom()
+
+    zoom *= 0.999 ** delta
+    if (zoom > zoom_max) zoom = zoom_max
+    if (zoom < zoom_min) zoom = zoom_min
+
+    this.canvas.zoomToPoint({ x: e.offsetX, y: e.offsetY }, zoom)
+
+    e.preventDefault()
+    e.stopPropagation()
   }
 
   initialLayer() {
@@ -119,18 +172,6 @@ class SegmentAnnotator {
       annotator._updateBoundaryLayer()
       this.setAlpha(0).render()
     })
-  }
-
-  updateIfActive(event) {
-    const offset = this.getClickOffset(event)
-    const superpixelData = this.layers.superpixel.imageData.data
-    const superpixelIndex = this.getEncodedLabel(superpixelData, offset)
-    const pixels = this.pixelIndex[superpixelIndex]
-
-    this.updateHighlight(pixels)
-    if (this.mousestate.down) {
-      this.updateAnnotation(pixels, this.currentLabel)
-    }
   }
 
   // Update label.
