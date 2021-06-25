@@ -1,38 +1,19 @@
 <template>
   <div>
     <h1>segmentation</h1>
-    <div class="box">
-      <div class="segment-annotator-outer-container">
-        <div class="segment-annotator-inner-container">
-          <div class="canvas-wrapper">
-            <canvas id="image" class="segment-annotator-layer"></canvas>
-          </div>
-          <div class="canvas-wrapper">
-            <canvas id="superpixel" class="segment-annotator-layer"></canvas>
-          </div>
-          <div class="canvas-wrapper">
-            <canvas id="visualization" class="segment-annotator-layer"></canvas>
-          </div>
-          <div class="canvas-wrapper">
-            <canvas id="boundary" class="segment-annotator-layer"></canvas>
-          </div>
-          <div class="canvas-wrapper">
-            <canvas id="annotation" class="segment-annotator-layer"></canvas>
-          </div>
-        </div>
+    <div class="segment-annotator-outer-container">
+      <div class="segment-annotator-inner-container">
+        <canvas id="image" class="segment-annotator-layer"></canvas>
       </div>
-    </div>
-
-    <div class="box">
-      <button @click="upload">upload</button>
     </div>
   </div>
 </template>
 
 <script>
 import segmentation from '../image/segmentation'
-import person from '../assets/2.png'
+import person from '../assets/sky.jpg'
 import SegmentAnnotator from '../helper/segment-annotator'
+import { fabric } from 'fabric'
 export default {
   name: 'Task',
   data() {
@@ -54,28 +35,10 @@ export default {
 
     this.layers = this.annotator.layers
     this.canvas1 = this.layers.image.canvas
+
+    this.upload()
   },
   methods: {
-    // loadImage() {
-    //   return new Promise(resolve => {
-    //     const image = new Image()
-    //     image.crossOrigin = 'anonymous'
-    //     image.src = person + '?crossOrigin'
-    //     // const _this = this
-
-    //     image.onload = async () => {
-    //       const result = await this.annotator.layers.image.onImageLoad(image)
-    //       if (result) {
-    //         // initail layer
-    //         this.annotator.initialLayer()
-    //         // initial visualization
-    //         this.annotator.initializeAnnotationLayer()
-    //         this.annotator.initializeVisualizationLayer()
-    //       }
-    //       resolve(true)
-    //     }
-    //   })
-    // },
     loadBackgroundImages() {
       return new Promise(resolve => {
         const image = new Image()
@@ -128,6 +91,22 @@ export default {
       this.updateBoundary()
       const data = this.setAlpha(0, imageData)
       ctx2.putImageData(data, 0, 0)
+
+      const boundaryCanvas = this.layers.boundary.canvas
+      const datas = boundaryCanvas
+        .getContext()
+        .getImageData(0, 0, boundaryCanvas.getWidth(), boundaryCanvas.getHeight())
+
+      const c = document.createElement('canvas')
+      c.width = this.canvas1.width
+      c.height = this.canvas1.height
+
+      c.getContext('2d').putImageData(datas, 0, 0)
+
+      fabric.Image.fromURL(c.toDataURL(), img => {
+        img.selectable = false
+        this.canvas1.add(img)
+      })
     },
     setAlpha(alpha, imageData) {
       var data = imageData.data
@@ -195,9 +174,6 @@ export default {
 }
 </script>
 <style scoped>
-.canvas-wrapper {
-  position: absolute !important;
-}
 .segment-annotator-layer {
   left: 0;
   position: absolute;

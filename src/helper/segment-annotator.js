@@ -106,8 +106,8 @@ class SegmentAnnotator {
   initializeVisualizationLayer() {
     const layer = this.layers.visualization
     layer.resize(this.width, this.height)
-    const initialColor = this.colormap[this.defaultLabel].concat([this.visualizationAlpha])
-    layer.fill(initialColor, layer.imageData)
+    // const initialColor = this.colormap[this.defaultLabel].concat([this.visualizationAlpha])
+    // layer.fill(initialColor, layer.imageData)
     layer.render()
   }
 

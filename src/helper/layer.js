@@ -11,11 +11,11 @@ class Layer {
 
   onImageLoad(image) {
     return new Promise(resolve => {
-      this.canvas.width = image.width
-      this.canvas.height = image.height
+      // this.canvas.width = image.width
+      // this.canvas.height = image.height
       const context = this.canvas.getContext('2d')
 
-      context.drawImage(image, 0, 0, image.width, image.height, 0, 0, this.canvas.width, this.canvas.height)
+      context.drawImage(image, 0, 0, this.canvas.width, this.canvas.height, 0, 0, this.canvas.width, this.canvas.height)
       this.imageData = context.getImageData(0, 0, this.canvas.width, this.canvas.height)
       resolve(true)
     })

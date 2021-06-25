@@ -2,14 +2,13 @@ import { fabric } from 'fabric'
 class Canvas {
   constructor(id, options) {
     this.canvas = new fabric.Canvas(id, options)
-    if (id === 'annotation') {
+    if (id === 'image') {
       this.initEvent(this.canvas)
     }
     this.superpixelData = null
     this.mousestate = { down: false, button: 0 }
   }
   initEvent(canvas) {
-    console.log('init event', canvas.getElement().id)
     if (canvas) {
       canvas.on('mouse:down', this.onMouseDown.bind(this))
       canvas.on('mouse:up', this.onMouseUp.bind(this))
