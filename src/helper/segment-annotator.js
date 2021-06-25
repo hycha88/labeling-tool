@@ -68,30 +68,13 @@ class SegmentAnnotator {
     canvas.on('mouse:move', this.onMouseMove.bind(this))
     canvas.on('mouse:out', this.onMouseOut.bind(this))
     canvas.on('mouse:wheel', this.wheelHandler.bind(this))
-    // canvas.addEventListener('mousedown', () => {
-    //   this.mousestate.down = true
-    // })
-
-    // canvas.addEventListener('mousemove', event => {
-    //   this.updateIfActive(event)
-    // })
-
-    // canvas.addEventListener('mouseup', event => {
-    //   this.updateIfActive(event)
-    // })
-    // canvas.addEventListener('mouseleave', () => {
-    //   this.updateHighlight(null)
-    // })
-    // const _this = this
-    // window.addEventListener('mouseup', function() {
-    //   _this.mousestate.down = false
-    // })
   }
 
   onMouseDown() {
     this.mousestate.down = true
   }
   onMouseUp(event) {
+    this.mousestate.down = false
     this.updateIfActive(event)
   }
   onMouseMove(event) {
@@ -102,7 +85,15 @@ class SegmentAnnotator {
   }
 
   updateIfActive(event) {
-    console.log('update if active', event)
+    const annotator = this
+    const offset = annotator.getClickOffset(event)
+    const superpixelData = annotator.layers.superpixel.imageData.data
+    const superpixelIndex = this.getEncodedLabel(superpixelData, offset)
+    const pixels = annotator.pixelIndex[superpixelIndex]
+    annotator.updateHighlight(pixels)
+    if (this.mousestate.down) {
+      annotator.updateAnnotation(pixels, annotator.currentLabel)
+    }
   }
   wheelHandler(opt) {
     const e = opt.e
